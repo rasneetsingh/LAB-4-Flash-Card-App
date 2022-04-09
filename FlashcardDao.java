@@ -1,0 +1,74 @@
+package com.example.rsinghflashcardapp;
+
+
+import android.content.Context;
+
+import androidx.room.Dao;
+import androidx.room.Delete;
+import androidx.room.Insert;
+import androidx.room.OnConflictStrategy;
+import androidx.room.Query;
+import androidx.room.Room;
+import androidx.room.Update;
+
+import java.util.List;
+
+@Dao
+public interface FlashcardDao {
+    @Query("SELECT * FROM flashcard")
+    List<Flashcard> getAll();
+
+    @Insert
+    void insertAll(Flashcard... flashcards);
+
+    @Delete
+    void delete(Flashcard flashcard);
+
+    @Update(onConflict = OnConflictStrategy.REPLACE)
+    void update(Flashcard flashcard);
+
+    class FlashcardDatabase {
+        private final AppDatabase db;
+
+        FlashcardDatabase(Context context) {
+            db = Room.databaseBuilder(context.getApplicationContext(),
+                    AppDatabase.class, "flashcard-database")
+                    .allowMainThreadQueries()
+                    .fallbackToDestructiveMigration()
+                    .build();
+        }
+
+        public void initFirstCard() {
+            if (db.flashcardDao().getAll().isEmpty()) {
+                insertCard(new Flashcard("Who is the 44th President of the United States", "Barack Obama"));
+            }
+        }
+
+        public List<Flashcard> getAllCards() {
+            return db.flashcardDao().getAll();
+        }
+
+        public void insertCard(Flashcard flashcard) {
+            db.flashcardDao().insertAll(flashcard);
+        }
+
+        public void deleteCard(String flashcardQuestion) {
+            List<Flashcard> allCards = db.flashcardDao().getAll();
+            for (Flashcard f : allCards) {
+                if (f.getQuestion().equals(flashcardQuestion)) {
+                    db.flashcardDao().delete(f);
+                }
+            }
+        }
+
+        public void updateCard(Flashcard flashcard) {
+            db.flashcardDao().update(flashcard);
+        }
+
+        public void deleteAll() {
+            for (Flashcard f : db.flashcardDao().getAll()) {
+                db.flashcardDao().delete(f);
+            }
+        }
+    }
+}
